@@ -1,6 +1,6 @@
-# Spectrum Analisys
+# Heightmap Exemple
 
 ## 
 
 
-![network](network.PNG)
+![heightmap](height_map.PNG)
