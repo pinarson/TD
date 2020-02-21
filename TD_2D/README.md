@@ -1,4 +1,4 @@
-# Animate 2D Shape
+# 2D Shape
 
 ## Circle Feedback 
 
