@@ -3,4 +3,4 @@
 ## Physics exemples
 
 
-![capture](capture.PNG)
+![capture](Capture.PNG)
