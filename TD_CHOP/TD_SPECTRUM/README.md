@@ -1,6 +1,6 @@
-# Heightmap Exemple
+# Spectrum Exemple
 
 ## 
 
 
-![height_map](height_map.PNG)
+![network](network.PNG)
