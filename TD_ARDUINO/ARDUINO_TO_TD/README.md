@@ -1,5 +1,5 @@
 # ARDUINO TO TD
 
 ## 
-![arduino](arduion.jpg)
+![arduino](arduino.JPG)
 ![Capture](Capture.PNG)
