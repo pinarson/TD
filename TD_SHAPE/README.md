@@ -2,4 +2,4 @@
 
 ![shape](shape.jpg)
 
-![Capture](Capture.png)
+![Capture](Capture.PNG)
