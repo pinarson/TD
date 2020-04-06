@@ -1,6 +1,5 @@
-# play with geo
+# Play with Geo and Feedback
 
-## shape exemple
+![shape](shape.jpg)
 
-
-![shape](shape.JPG)
+![Capture](Capture.png)
