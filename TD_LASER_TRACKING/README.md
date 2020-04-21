@@ -1,4 +1,4 @@
-# Red laser Tracking Touchdesigner
+# Red Laser Tracking Touchdesigner
 
 ## 
 
