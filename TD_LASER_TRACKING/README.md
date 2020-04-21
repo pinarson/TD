@@ -2,5 +2,6 @@
 
 ## 
 
-![network](animated.GIF)
-![network](Capture.PNG)
+![animated](animated.gif)
+
+![Capture](Capture.PNG)
