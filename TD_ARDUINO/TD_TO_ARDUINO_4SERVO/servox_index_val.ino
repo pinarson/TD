@@ -5,90 +5,89 @@
 //
 #include <Servo.h>
 
+static const uint8_t N = 4;
+static const uint8_t pins[N] = {3, 5, 6, 9}; // à adapter
 
-//Setup buffer
-char buffer[16];   //maximum expected length 
-int len = 0;
-Servo myservo1; // create Servo object 
-Servo myservo2;
-Servo myservo3;
-Servo myservo4;
+Servo servos[N];
 
-void setup()
-{
-  Serial.begin(9600); 
-  
-  //define the three pins as outputs
-  Serial.begin(9600); 
-  pinMode(9, OUTPUT); 
-  myservo1.attach(9);  
-  pinMode(10, OUTPUT); 
-  myservo2.attach(10);
-  pinMode(5, OUTPUT); 
-  myservo3.attach(5);  
-  pinMode(3, OUTPUT); 
-  myservo4.attach(3); 
-  
-//Stanby position servo 90 or close to 90 ex:servo4 value -> position zero = 84
-  myservo1.write(90);
-  myservo2.write(90);
-  myservo3.write(90);
-  myservo4.write(84);
+float target[N]   = {90, 90, 90, 90};
+float filtered[N] = {90, 90, 90, 90};
+
+const float alpha = 0.25f;          // lissage (0 = figé, 1 = brut)
+const uint32_t failsafeMs = 500;    // si plus de data -> position safe
+uint32_t lastRx = 0;
+
+String rx; // OK pour petites trames; sinon buffer char[]
+
+void setup() {
+  Serial.begin(115200);
+  for (uint8_t i = 0; i < N; i++) {
+    servos[i].attach(pins[i]);
+    servos[i].write((int)filtered[i]);
+  }
+  lastRx = millis();
 }
-void loop()
-{
-    if (Serial.available() > 0) 
-    {
-        int incomingByte = Serial.read();
-        buffer[len++] = incomingByte;
-        //
-        // check for overflow
-        //
-        
-        
-        if (len >= 16)
-        {
-            // overflow, resetting
-            len = 0;
-        }
-        //
-        // check for newline (end of message)
-        //
-        if (incomingByte == '\n')
-        {
-            int index;
-            int val;
-            int n = sscanf(buffer, "%d %d", &index, &val);
-            
-            if(n == 2)
-            {
-              if(index == 0)
-              {
-                myservo1.write(val);
-                Serial.println(val);  
-              }
-              if(index == 1)
-              {
-                myservo2.write(val);
-                Serial.println(val);
-              }
-              if(index == 2)
-              {
-                myservo3.write(val);
-                Serial.println(val);
-              }
-              if(index == 3)
-              {
-                myservo4.write(val);
-                Serial.println(val);
-              }
-            }
-            else
-            {
-                 // parsing error, reject
-                 Serial.print("PARSING ERROR, REJECTED!!!");
-            }
-            len = 0; // reset buffer counter
-        }
+
+bool parseFrame(const String& s) {
+  // attend "<a,b,c,d>"
+  if (s.length() < 3) return false;
+  if (s[0] != '<' || s[s.length()-1] != '>') return false;
+
+  String payload = s.substring(1, s.length()-1);
+
+  int values[N];
+  uint8_t idx = 0;
+
+  int start = 0;
+  while (idx < N) {
+    int comma = payload.indexOf(',', start);
+    String token = (comma == -1) ? payload.substring(start) : payload.substring(start, comma);
+    token.trim();
+    if (token.length() == 0) return false;
+
+    values[idx] = token.toInt();
+    idx++;
+
+    if (comma == -1) break;
+    start = comma + 1;
+  }
+
+  if (idx != N) return false;
+
+  for (uint8_t i = 0; i < N; i++) {
+    target[i] = constrain(values[i], 0, 180);
+  }
+
+  lastRx = millis();
+  return true;
+}
+
+void loop() {
+  // Lecture non bloquante
+  while (Serial.available() > 0) {
+    char c = (char)Serial.read();
+    if (c == '\n' || c == '\r') continue;
+
+    if (c == '<') rx = "<";                 // reset frame
+    else if (rx.length() > 0) rx += c;      // on accumule uniquement si on est “dans” une frame
+
+    if (c == '>' && rx.length() > 0) {
+      parseFrame(rx);
+      rx = "";
     }
+
+    // Anti débordement si trame pourrie
+    if (rx.length() > 64) rx = "";
+  }
+
+  // Failsafe
+  if (millis() - lastRx > failsafeMs) {
+    for (uint8_t i = 0; i < N; i++) target[i] = 90;
+  }
+
+  // Update servos + lissage (cadence libre)
+  for (uint8_t i = 0; i < N; i++) {
+    filtered[i] = filtered[i] + alpha * (target[i] - filtered[i]);
+    servos[i].write((int)(filtered[i] + 0.5f));
+  }
 }
